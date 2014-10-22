@@ -1,3 +1,62 @@
+== v1.10.2 (Oct/20 2014 16:38 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* onChange event fired at the wrong time when the field already has a value.
+
+== v1.10.1 (Oct/20 2014 16:08 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* fixing onChange event behaviour
+
+== v1.10.0 (Oct/20 2014 10:56 -0200 by Igor Escobar) ==
+
+Features:
+
+* adding a way to change global settings like translation object and the byPassKeys object.
+
+== v1.9.2 (Oct/20 2014 10:08 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* fixing fallback digits implementation. Thanks @A1rPun
+
+== v1.9.1 (Oct/18 2014 12:27 -0300 by Igor Escobar) ==
+
+Bugfixes:
+
+* cant convert circular json exception
+
+== v1.9.0 (Oct/18 2014 12:07 -0300 by Igor Escobar) ==
+
+Features:
+
+* adding onInvalid callback
+
+== v1.8.0 (Oct/17 2014 11:35 -0300 by Igor Escobar) ==
+
+Changes:
+
+* removing automatic maxlength support
+* making a few optimizations to make it faster and retro compatible with other libraries
+* creating globalOptions to make it more fast and flexible
+
+Bugfixes:
+
+* fixing issue #196
+
+Features:
+
+* adding the fallback translation option
+
+== v1.7.8 (Oct/15 2014 10:55 -0300 by Igor Escobar) ==
+
+Bugfixes:
+
+* change event may experience issues
+* avoid maximum call stack trace error
+
 == v1.7.7 (Sep/10 2014 22:31 -0300 by Igor Escobar) ==
 
 Bugfixes:

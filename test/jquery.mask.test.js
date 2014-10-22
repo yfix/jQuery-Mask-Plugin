@@ -21,20 +21,6 @@ $(document).ready(function(){
       equal( typeof testfield.mask , "function" , "mask function should exists" );
     });
 
-    module("Disabling Automatic Maxlength");
-    test("maxlength should be 11", function(){
-      testfield.mask('999-9990-99', {maxlength: false});
-      equal( testfield.attr('maxlength'), undefined)
-    });
-
-    module("Automatic Maxlength");
-    test("maxlength should be 11", function(){
-      testfield.mask('999-9990-99');
-      equal( testfield.attr('maxlength'), 11)
-    });
-
-    
-
     module('Simple Masks');
     test("Masks with only numbers.", function(){
       testfield.mask('000000');
@@ -107,7 +93,31 @@ $(document).ready(function(){
      
     });
 
+    test("#onInvalid callback. should call when invalid", function(){
+      testfield.mask('00/00/0000', {onInvalid: function(val, e, el, invalid, options){
+        equal(val, "1")
+        equal(typeof e, "object")
+        equal(typeof el, "object")
+        equal(invalid.length, 1);
+        equal(invalid[0]["e"], "/\\d/");
+        equal(invalid[0]["p"], 1);
+        equal(invalid[0]["v"], "a");
+        equal(typeof options.onInvalid, "function");
+      }});
+
+      equal( typeTest("1a") , "1");
+    });
+
+    test("#onInvalid callback. should not call when valid", function(){
+      var callback = sinon.spy();
+      testfield.mask('00/00/0000', {onInvalid: callback});
+
+      equal( typeTest("11") , "11");
+      equal(callback.called, false)
+    });
+
     test('When I typed a char thats the same as the mask char', function(){
+      testfield.unmask();
       testfield.mask('00/00/0000');
 
       equal( typeTest("00/"), "00/");
@@ -333,7 +343,7 @@ $(document).ready(function(){
   });
 
   test("when I get the unmasked value with recursive mask", function(){
-    testfield.mask('#.##0,00', {reverse:true, maxlength: false});
+    testfield.mask('#.##0,00', {reverse:true});
 
     equal( typeTest("123123123123123123", testfield), "1.231.231.231.231.231,23");
     equal( testfield.cleanVal(), "123123123123123123");
@@ -354,6 +364,63 @@ $(document).ready(function(){
 
     equal( typeTest('12/34/5678'), '12/34/5678');
     equal( typeTest('12/**/5678'), '12/**/5678');
+  });
+
+  test("when adding more itens to the table translation #3",function(){
+    var old_translation = $.jMaskGlobals.translation
+    $.jMaskGlobals.translation = {
+      '1': {pattern: /\d/},
+      '9': {pattern: /\d/, optional: true},
+      '#': {pattern: /\d/, recursive: true},
+      'A': {pattern: /[a-zA-Z0-9]/},
+      'S': {pattern: /[a-zA-Z]/}
+    };
+
+    testfield.mask('00/11/1111');
+
+    equal( typeTest('12/12/5678'), '00/12/1256');
+
+    testfield.mask('11/00/1111');
+    equal( typeTest('12/12/5678'), '12/00/1256');
+    
+    $.jMaskGlobals.translation = old_translation;
+  });
+
+  test("when adding more itens to the table translation #fallback",function(){
+    testfield.mask('zz/z0/0000', {'translation': {'z': {pattern: /[0-9*]/, fallback: '*'}}});
+
+    equal( typeTest('12/:4/5678'), '12/*4/5678');
+    equal( typeTest('::/:4/5678'), '**/*4/5678');
+  });
+
+  test("test the translation #fallback #1" , function(){
+    testfield.mask('00t00', {'translation': {'t': {pattern: /[:,.]/, fallback: ':'}}});
+
+    equal( typeTest('1'), '1');
+    equal( typeTest('13'), '13');
+    equal( typeTest('137'), '13:7');
+    equal( typeTest('1337'), '13:37');
+    equal( typeTest('13z00'), '13:00');
+  });
+
+  test("test the translation #fallback #2" , function(){
+    testfield.mask('00/t0/t0', {'translation': {'t': {pattern: /[:,.*]/, fallback: '*'}}});
+
+    equal( typeTest('1'), '1');
+    equal( typeTest('13'), '13');
+    equal( typeTest('13/'), '13/');
+    equal( typeTest('13/a'), '13/*');
+    equal( typeTest('13/a1z1'), '13/*1/*1');
+  });
+
+  test("test the translation #fallback #3" , function(){
+    testfield.mask('tt/00/00', {'translation': {'t': {pattern: /[:,.*]/, fallback: '*'}}});
+
+    equal( typeTest('*'), '*');
+    equal( typeTest('13'), '**/13');
+    equal( typeTest('13/'), '**/13/');
+    equal( typeTest('13/a'), '**/13/');
+    equal( typeTest('13/a1z1'), '**/13/11');
   });
 
   test("when adding opcional chars",function(){
@@ -414,7 +481,11 @@ $(document).ready(function(){
 
   // TODO: need to understand why zepto.js isnt calling change event!
   if(!window.Zepto) {
-    test('onChange Test', 12, function(){
+    test('onChange Test', 2, function(){
+      testfield.unmask();
+
+      var callback = sinon.spy();
+      var mock = sinon.mock()
       var typeAndBlur = function(typedValue){
         testfield.trigger('keydown');
         testfield.val(typedValue);
@@ -422,12 +493,11 @@ $(document).ready(function(){
         testfield.trigger("blur");
       };
 
-      testfield.on("change", function(e){
-        ok(true, "Change event!!");
-      });
-
       testfield.mask('000.(000).000/0-0');
 
+      testfield.on("change", callback);
+
+      typeAndBlur("");
       typeAndBlur("1");
       typeAndBlur("12");
       typeAndBlur("123");
@@ -441,9 +511,12 @@ $(document).ready(function(){
       typeAndBlur("1234567891");
       typeAndBlur("12345678912");
 
-      equal( testfield.val(), "123.(456).789/1-2" );
+      equal(testfield.val(), "123.(456).789/1-2" );
+      equal(true, sinon.match(11).or(12).test(callback.callCount))
 
       testfield.off("change");
+      testfield.unmask();
+
     });
   }
   
@@ -571,7 +644,7 @@ $(document).ready(function(){
     };
 
     // javascript notation
-    testfield.mask('#.##0,00', {clearIfNotMatch: true, reverse: true, maxlength: false});
+    testfield.mask('#.##0,00', {clearIfNotMatch: true, reverse: true});
 
     typeAndBlur(testfield, "0");
     equal( testfield.val(), "" );
@@ -584,5 +657,46 @@ $(document).ready(function(){
 
     typeAndBlur(testfield, "1.000,00");
     equal( testfield.val(), "1.000,00" );
+  });
+
+  module('dynamically loaded elements')
+  test('#non-inputs', function(){
+    expect(5);
+
+    var $container = $('#container-dy-non-inputs');
+    var clock = this.clock;
+    var ticker;
+    var tester;
+    var c = 0;
+
+    function write() {
+    
+      if (c >= 5) {
+          clearInterval(ticker);
+          clearInterval(tester);
+          return;
+      }
+
+      c++;
+
+      $container.append('<div class="c">' + c + c + c + c + '</div>');      
+      clock.tick(1000);
+    };
+
+    function testIt() {
+     
+      var cs = $container.find('.c');
+      $.each(cs, function(k, field){
+        var t = k + 1;
+        equal($(field).text(), '' + t + t + ':' + t + t);
+        t++;
+      });
+    };
+
+    ticker = setInterval(write, 1000);
+
+    write();
+    $('.c', $container).mask('00:00');
+    testIt()
   });
 });

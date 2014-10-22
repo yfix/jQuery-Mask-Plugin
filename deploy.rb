@@ -2,10 +2,10 @@ require 'rubygems'
 require 'zlib'
 
 JQUERY_MANIFEST_FILE = 'mask.jquery.json'
-JMASK_FILE = 'jquery.mask.js'
-JMASK_MIN_FILE = 'jquery.mask.min.js'
+JMASK_FILE = 'src/jquery.mask.js'
+JMASK_MIN_FILE = 'dist/jquery.mask.min.js'
 GHPAGES_JMASK_MIN_FILE = 'js/jquery.mask.min.js'
-JMASK_GZIP_FILE = 'jquery.mask.min.js.gz'
+JMASK_GZIP_FILE = 'dist/jquery.mask.min.js.gz'
 JMASK_VERSION = `stepup version --next-release`.delete("\n")
 BOWER_MANIFEST_FILE = 'bower.json'
 NPM_MANIFEST_FILE = 'package.json'
@@ -18,6 +18,9 @@ unversioned_jmask_file = File.open(JMASK_FILE, 'rb') { |file| file.read }
 File.open(JMASK_FILE, 'w') do |file| 
   file.write(unversioned_jmask_file.gsub(/\* @version: (v[0-9.+]+)/, "\* @version: #{JMASK_VERSION}"))
 end
+
+puts '# COPYING NEW JMASK FILE TO DIST/'
+`yes | cp #{JMASK_FILE} dist/`
 
 [BOWER_MANIFEST_FILE, NPM_MANIFEST_FILE, COMPONENT_MANIFEST_FILE, JQUERY_MANIFEST_FILE].each { |manifest_name|
   puts "# UPGRADING #{manifest_name} "
@@ -33,7 +36,7 @@ File.open(JMASK_FILE, 'r') do |file|
   minFile = File.open(JMASK_MIN_FILE, 'w')
   minFile.puts("// jQuery Mask Plugin #{JMASK_VERSION}")
   minFile.puts("// github.com/igorescobar/jQuery-Mask-Plugin") 
-  jquery_mask_min_file = `java -jar ../clojure-compiler/compiler.jar --js jquery.mask.js --charset UTF-8`
+  jquery_mask_min_file = `java -jar ../clojure-compiler/compiler.jar --js src/jquery.mask.js --charset UTF-8`
   minFile.puts(jquery_mask_min_file)
   minFile.close
 end
@@ -56,7 +59,7 @@ puts '# CREATING NEW VERSION'
 `stepup version create --no-editor`
 
 puts '# UPGRATING CHANGELOG'
-`stepup changelog --format=wiki > CHANGELOG.txt`
+`stepup changelog --format=wiki > CHANGELOG.md`
 `git commit -am "upgrading changelog"`
 `git push`
 
@@ -69,6 +72,7 @@ minFile.puts("// jQuery Mask Plugin #{JMASK_VERSION}")
 minFile.puts("// github.com/igorescobar/jQuery-Mask-Plugin") 
 minFile.puts(jquery_mask_min_file)
 minFile.close 
+
 `git commit -am "upgrading plugin file"`
 `git push`
 `git checkout master`
