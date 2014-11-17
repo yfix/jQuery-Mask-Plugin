@@ -1,6 +1,6 @@
 /**
  * jquery.mask.js
- * @version: v1.10.2.1
+ * @version: v1.10.12
  * @author: Igor Escobar
  *
  * Created by Igor Escobar on 2012-03-10. Please report any bug at http://blog.igorescobar.com
@@ -63,7 +63,7 @@
                         cSelStart = ctrl.selectionStart;
 
                     // IE Support
-                    if (dSel && !~navigator.appVersion.indexOf("MSIE 10")) {
+                    if (dSel && navigator.appVersion.indexOf("MSIE 10") === -1) {
                         sel = dSel.createRange();
                         sel.moveStart('character', el.is("input") ? -el.val().length : -el.text().length);
                         pos = sel.text.length;
@@ -164,7 +164,9 @@
                     r;
 
                 if (arguments.length > 0) {
-                    el[method](v);
+                    if (el[method]() !== v) {
+                        el[method](v);
+                    }
                     r = el;
                 } else {
                     r = el[method]();
@@ -201,9 +203,7 @@
                         newValL = newVal.length,
                         maskDif = p.getMCharsBeforeCount(newValL - 1) - p.getMCharsBeforeCount(currValL - 1);
 
-                    if (newVal !== currVal) {
-                        p.val(newVal);
-                    }
+                    p.val(newVal);
 
                     // change caret but avoid CTRL+A
                     if (changeCaret && !(keyCode === 65 && e.ctrlKey)) {
@@ -300,7 +300,7 @@
                     defaultArgs = [val, e, el, options],
                     callback = function(name, criteria, args) {
                         if (typeof options[name] === "function" && criteria) {
-                            options[name].apply(this, args)
+                            options[name].apply(this, args);
                         }
                     };
 
@@ -346,12 +346,14 @@
                     el.attr('placeholder' , options.placeholder);
                 }
                 
+                // autocomplete needs to be off. we can't intercept events
+                // the browser doesn't  fire any kind of event when something is 
+                // selected in a autocomplete list so we can't sanitize it.
                 el.attr('autocomplete', 'off');
                 p.destroyEvents();
                 p.events();
 
                 var caret = p.getCaret();
-
                 p.val(p.getMasked());
                 p.setCaret(caret + p.getMCharsBeforeCount(caret, true));
 
@@ -365,8 +367,8 @@
 
     };
 
-    var watchers = {},
-        HTMLAttributes = function () {
+    $.maskWatchers = {};
+    var HTMLAttributes = function () {
             var input = $(this),
                 options = {},
                 prefix = "data-mask-",
@@ -388,14 +390,16 @@
             options = options || {};
             var maskObject = $(field).data('mask'), stringify = JSON.stringify;
             try {
-                return typeof maskObject !== "object" || stringify(maskObject.options) !== stringify(options) || maskObject.mask !== mask    
+                return typeof maskObject !== "object" || stringify(maskObject.options) !== stringify(options) || maskObject.mask !== mask;
             } catch (e) {}
-        }
+        };
+
 
     $.fn.mask = function(mask, options) {
         options = options || {};
         var selector = this.selector,
             globals = $.jMaskGlobals,
+            interval = $.jMaskGlobals.watchInterval,
             maskFunction = function() {
                 if (notSameMaskObject(this, mask, options)) {
                     return $(this).data('mask', new Mask(this, mask, options));
@@ -404,43 +408,33 @@
 
         $(this).each(maskFunction);
 
-        if (globals.watchInputs && selector && selector !== "" && !watchers[selector]) {
-            watchers[selector] = true;
-
-            setInterval(function(){
+        if (selector && selector !== "" && globals.watchInputs) {
+            clearInterval($.maskWatchers[selector]);
+            $.maskWatchers[selector] = setInterval(function(){
                 $(document).find(selector).each(maskFunction);
-            }, 300);
-
-        }
-
-        // looking for inputs with data-mask attribute
-        if (globals.dataMask) {            
-            $('*[data-mask]').each(HTMLAttributes);
-        }
-
-        if (globals.watchDataMask) {
-            setInterval(function(){
-                $(document).find(globals.nonInput).filter('*[data-mask]').each(HTMLAttributes);
-            }, 300);
-        }
-        
+            }, interval);
+        }        
     };
 
     $.fn.unmask = function() {
-        try {
-            return this.each(function() {
+        clearInterval($.maskWatchers[this.selector]);
+        delete $.maskWatchers[this.selector];
+        return this.each(function() {
+            if ($(this).data('mask')) {
                 $(this).data('mask').remove().removeData('mask');
-            });
-        } catch(e) {};
+            }
+        });
     };
 
     $.fn.cleanVal = function() {
         return this.data('mask').getCleanVal();
     };
-    
-    $.jMaskGlobals = {
-        nonInput: 'td,span,div',
+
+    var globals = {
+        maskElements: 'input,td,span,div',
+        dataMaskAttr: '*[data-mask]',
         dataMask: true,
+        watchInterval: 300,
         watchInputs: true,
         watchDataMask: false,
         byPassKeys: [9, 16, 17, 18, 36, 37, 38, 39, 40, 91],
@@ -452,4 +446,18 @@
             'S': {pattern: /[a-zA-Z]/}
         }
     };
+
+    $.jMaskGlobals = $.jMaskGlobals || {};
+    globals = $.jMaskGlobals = $.extend(true, {}, globals, $.jMaskGlobals);
+    
+    // looking for inputs with data-mask attribute
+    if (globals.dataMask) {            
+        $(globals.dataMaskAttr).each(HTMLAttributes);
+    }
+
+    setInterval(function(){
+        if ($.jMaskGlobals.watchDataMask) {
+            $(document).find($.jMaskGlobals.maskElements).filter(globals.dataMaskAttr).each(HTMLAttributes);
+        }
+    }, globals.watchInterval);
 }));

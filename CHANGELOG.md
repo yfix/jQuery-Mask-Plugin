@@ -1,3 +1,64 @@
+== v1.10.12 (Nov/06 2014 13:08 -0200 by Igor Escobar) ==
+
+Changes:
+
+* making a few improvements to make selection, copy events easier
+
+== v1.10.11 (Nov/06 2014 11:26 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* we need to revaluate dataMask flags everytime
+
+== v1.10.10 (Nov/06 2014 10:41 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* fixing dynamically data-mask added elements
+
+== v1.10.9 (Nov/05 2014 10:52 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* data-mask wasnt working
+
+== v1.10.8 (Nov/01 2014 13:49 -0200 by Igor Escobar) ==
+
+Changes:
+
+* we dont need to seek for data-mask every time
+
+== v1.10.7 (Nov/01 2014 13:18 -0200 by Igor Escobar) ==
+
+Changes:
+
+* little optimization
+
+== v1.10.6 (Oct/28 2014 13:59 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* fixing weird cursor problems in weird cases.
+* dynamically added inputs wasnt working
+
+== v1.10.5 (Oct/23 2014 11:41 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* fixing weird cursor problems in weird cases.
+
+== v1.10.4 (Oct/23 2014 11:02 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* fixing on the fly mask change feature.
+
+== v1.10.3 (Oct/22 2014 09:50 -0200 by Igor Escobar) ==
+
+Bugfixes:
+
+* fixing unmask method.
+
 == v1.10.2 (Oct/20 2014 16:38 -0200 by Igor Escobar) ==
 
 Bugfixes:
